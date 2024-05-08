@@ -1,0 +1,23 @@
+diff --git a/predict_GoPro_test_results.py b/predict_GoPro_test_results.py
+index 2ed13e6..b31312e 100644
+--- a/predict_GoPro_test_results.py
++++ b/predict_GoPro_test_results.py
+@@ -13,14 +13,16 @@ import argparse
+ def get_args():
+ 	parser = argparse.ArgumentParser('Test an image')
+ 	parser.add_argument('--weights_path', required=True, help='Weights path')
++	parser.add_argument('--blur_path', required=True, help='Blurred images path')
++	parser.add_argument('--out_path', required=True, help='Output path')
+ 	return parser.parse_args()
+
+ if __name__ == '__main__':
+     args = get_args()
+     with open('config/config_Stripformer_gopro.yaml') as cfg:
+         config = yaml.safe_load(cfg)
+-    blur_path = './datasets/GoPro/test/blur/'
+-    out_path = './out/Stripformer_GoPro_results'
++    blur_path = args.blur_path
++    out_path = args.out_path
+     if not os.path.isdir(out_path):
+         os.mkdir(out_path)
+     model = get_generator(config['model'])

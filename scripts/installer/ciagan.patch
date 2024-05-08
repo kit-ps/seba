@@ -1,0 +1,65 @@
+diff --git a/source/test.py b/source/test.py
+index a172b35..df47dbc 100644
+--- a/git/source/test.py
++++ b/git/source/test.py
+@@ -18,7 +18,7 @@ def inference(generator, out_dir, data_loader, device_comp, num_classes = 1200):
+     total_imgs = 0
+     for batch in data_loader:
+         # prepare data
+-        im_faces, im_lndm, im_msk, im_ind = [item[0].float().to(device_comp) for item in batch]
++        im_faces, im_lndm, im_msk, im_ind, im_lab = [item[0].float().to(device_comp) for item in batch]
+
+         output_id = (int(im_ind[0].cpu())+1)%num_classes #chose next id
+
+@@ -34,9 +34,9 @@ def inference(generator, out_dir, data_loader, device_comp, num_classes = 1200):
+
+         # output image
+         img_out = transforms.ToPILImage()(im_gen[0].cpu()).convert("RGB")
+-        img_out.save(join(out_dir, str(total_imgs).zfill(6) + '.jpg'))
++        img_out.save(join(out_dir, str(int(im_lab[0])).zfill(6) + '.jpg'))
+         total_imgs+=1
+    
+     print("Done.")
+
+
+diff --git a/source/util_data.py b/source/util_data.py
+index 4c8d18f..79c3c97 100644
+--- a/git/source/util_data.py
++++ b/git/source/util_data.py
+@@ -40,7 +40,7 @@ class ImageDataset(torch.utils.data.Dataset):
+         self.root_img = 'clr/'
+         self.root_lndm = 'lndm/'
+         self.root_msk = 'msk/'
+-        self.im_label, self.im_paths, self.im_index = [], [], []
++        self.im_label, self.im_paths, self.im_index, self.nom = [], [], [], []
+
+         self.flag_augment = flag_augment
+
+@@ -55,6 +55,7 @@ class ImageDataset(torch.utils.data.Dataset):
+                 self.im_label += [it_i] * len(imglist_all)
+                 self.im_paths += imglist_all
+                 self.im_index += [it_j] * len(imglist_all)
++                self.nom += imglist_all_int
+                 it_j+=1
+             print("Dataset initialized")
+
+@@ -92,7 +93,7 @@ class ImageDataset(torch.utils.data.Dataset):
+         return self.transform_fnc(img_res)
+
+     def __getitem__(self, idx):
+-        im_clr, im_lndm, im_msk, im_ind = [], [], [], []
++        im_clr, im_lndm, im_msk, im_ind, im_lab = [], [], [], [], []
+         if self.flag_sample==1:
+             idx = [idx]
+
+@@ -111,8 +112,9 @@ class ImageDataset(torch.utils.data.Dataset):
+             im_msk.append(msk)
+
+             im_ind.append(self.im_index[idx[k_iter]])
++            im_lab.append(self.nom[idx[k_iter]])
+
+-        return im_clr, im_lndm, im_msk, im_ind
++        return im_clr, im_lndm, im_msk, im_ind, im_lab
+
+
+ def load_data(DATA_PATH, DATA_SET, WORKERS_NUM, BATCH_SIZE, IMG_SIZE, FLAG_DATA_AUGM, LABEL_NUM, mode_train=True):

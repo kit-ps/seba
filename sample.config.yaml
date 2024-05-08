@@ -1,0 +1,27 @@
+---
+- repeat: 1
+  config:
+    exp: anon
+    dataset: celeba50mp-normx
+    selector:
+      name: random
+      params:
+        ids: 20
+        seed: default
+    anonymization:
+      name: gaussianblur
+      params:
+        kernel: 9
+    splitter:
+      name: anon
+      params:
+        enroll_anon: false
+        test_anon: false
+        rate: 0.75
+        seed: default
+    privacy:
+      name: deepface
+      params:
+        model: ArcFace
+        distance: cosine
+        already_normalized: true

@@ -1,0 +1,209 @@
+--- DeepFace.py       2023-09-01 09:00:00.000000000 +0200
++++ DeepFace.py       2023-09-01 09:00:00.000000000 +0200
+@@ -66,7 +66,7 @@
+ 
+ 	return model_obj[model_name]
+ 
+-def verify(img1_path, img2_path = '', model_name = 'VGG-Face', distance_metric = 'cosine', model = None, enforce_detection = True, detector_backend = 'opencv', align = True, prog_bar = True):
++def verify(img1_path, img2_path = '', model_name = 'VGG-Face', distance_metric = 'cosine', model = None, enforce_detection = True, detector_backend = 'opencv', align = True, prog_bar = True,  already_normalized = False):
+ 
+ 	"""
+ 	 This function verifies an image pair is same person or different persons.
+@@ -161,12 +161,12 @@
+ 				img1_representation = represent(img_path = img1_path
+ 						, model_name = model_name, model = custom_model
+ 						, enforce_detection = enforce_detection, detector_backend = detector_backend
+-						, align = align)
++						, align = align, already_normalized = already_normalized)
+ 
+ 				img2_representation = represent(img_path = img2_path
+ 						, model_name = model_name, model = custom_model
+ 						, enforce_detection = enforce_detection, detector_backend = detector_backend
+-						, align = align)
++						, align = align, already_normalized = already_normalized)
+ 
+ 				#----------------------
+ 				#find distances between embeddings
+@@ -260,7 +260,7 @@
+ 
+		return resp_obj
+ 
+-def analyze(img_path, actions = ['emotion', 'age', 'gender', 'race'] , models = {}, enforce_detection = True, detector_backend = 'opencv', prog_bar = True):
++def analyze(img_path, actions = ['emotion', 'age', 'gender', 'race'] , models = {}, enforce_detection = True, detector_backend = 'opencv', prog_bar = True, already_normalized = False):
+ 
+	"""
+	This function analyzes facial attributes including age, gender, emotion and race
+@@ -371,7 +371,7 @@
+		region = [] # x, y, w, h of the detected face region
+		region_labels = ['x', 'y', 'w', 'h']
+
+-		is_region_set = False
++		is_region_set = True
+
+		#facial attribute analysis
+		for index in pbar:
+@@ -380,7 +380,7 @@
+ 
+			if action == 'emotion':
+				 emotion_labels = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
+-				img, region = functions.preprocess_face(img = img_path, target_size = (48, 48), grayscale = True, enforce_detection = enforce_detection, detector_backend = detector_backend, return_region = True)
++				img = functions.preprocess_face(img = img_path, target_size = (48, 48), grayscale = True, enforce_detection = enforce_detection, detector_backend = detector_backend, already_normalized = already_normalized)
+ 
+				emotion_predictions = models['emotion'].predict(img)[0,:]
+ 
+@@ -397,7 +397,7 @@
+ 
+			elif action == 'age':
+				if img_224 is None:
+-					img_224, region = functions.preprocess_face(img = img_path, target_size = (224, 224), grayscale = False, enforce_detection = enforce_detection, detector_backend = detector_backend, return_region = True)
++					img_224 = functions.preprocess_face(img = img_path, target_size = (224, 224), grayscale = False, enforce_detection = enforce_detection, detector_backend = detector_backend, already_normalized = already_normalized)
+ 
+				age_predictions = models['age'].predict(img_224)[0,:]
+				apparent_age = Age.findApparentAge(age_predictions)
+@@ -406,7 +406,7 @@
+ 
+			elif action == 'gender':
+				if img_224 is None:
+-					img_224, region = functions.preprocess_face(img = img_path, target_size = (224, 224), grayscale = False, enforce_detection = enforce_detection, detector_backend = detector_backend, return_region = True)
++					 img_224 = functions.preprocess_face(img = img_path, target_size = (224, 224), grayscale = False, enforce_detection = enforce_detection, detector_backend = detector_backend, already_normalized = already_normalized)
+ 
+				gender_prediction = models['gender'].predict(img_224)[0,:]
+ 
+@@ -419,7 +419,7 @@
+ 
+			elif action == 'race':
+				if img_224 is None:
+-					img_224, region = functions.preprocess_face(img = img_path, target_size = (224, 224), grayscale = False, enforce_detection = enforce_detection, detector_backend = detector_backend, return_region = True) #just emotion model expects grayscale images
++					img_224 = functions.preprocess_face(img = img_path, target_size = (224, 224), grayscale = False, enforce_detection = enforce_detection, detector_backend = detector_backend, already_normalized = already_normalized) #just emotion model expects grayscale images
+				race_predictions = models['race'].predict(img_224)[0,:]
+				race_labels = ['asian', 'indian', 'black', 'white', 'middle eastern', 'latino hispanic']
+ 
+@@ -458,7 +458,7 @@
+ 
+		return resp_obj
+ 
+-def find(img_path, db_path, model_name ='VGG-Face', distance_metric = 'cosine', model = None, enforce_detection = True, detector_backend = 'opencv', align = True, prog_bar = True):
++def find(img_path, db_path, model_name ='VGG-Face', distance_metric = 'cosine', model = None, enforce_detection = True, detector_backend = 'opencv', align = True, prog_bar = True, already_normalized = False):
+ 
+	"""
+	This function applies verification several times and find an identity in a database
+@@ -571,7 +571,7 @@
+					representation = represent(img_path = employee
+						, model_name = model_name, model = custom_model
+						, enforce_detection = enforce_detection, detector_backend = detector_backend
+-						, align = align)
++						, align = align, already_normalized = already_normalized)
+ 
+					instance.append(representation)
+ 
+@@ -613,7 +613,7 @@
+				target_representation = represent(img_path = img_path
+					, model_name = model_name, model = custom_model
+					, enforce_detection = enforce_detection, detector_backend = detector_backend
+-					, align = align)
++					, align = align, already_normalized = already_normalized)
+ 
+				for k in metric_names:
+					distances = []
+@@ -704,7 +704,7 @@
+ 
+	return None
+ 
+-def represent(img_path, model_name = 'VGG-Face', model = None, enforce_detection = True, detector_backend = 'opencv', align = True):
++def represent(img_path, model_name = 'VGG-Face', model = None, enforce_detection = True, detector_backend = 'opencv', align = True, already_normalized = False):
+ 
+	"""
+	This function represents facial images as vectors.
+@@ -739,7 +739,8 @@
+		, target_size=(input_shape_y, input_shape_x)
+		, enforce_detection = enforce_detection
+		, detector_backend = detector_backend
+-		, align = align)
++		, align = align
++		, already_normalized = already_normalized)
+ 
+	#represent
+	embedding = model.predict(img)[0].tolist()
+--- commons/functions.py        2023-09-01 09:00:00.000000000 +0200
++++ commons/functions.py        2023-09-01 09:00:00.000000000 +0200
+@@ -102,10 +104,28 @@
+ 			else:
+ 			  raise ValueError("Face could not be detected. Please confirm that the picture is a face photo or consider to set enforce_detection param to False.")
+
+-def preprocess_face(img, target_size=(224, 224), grayscale = False, enforce_detection = True, detector_backend = 'opencv', return_region = False, align = True):
++def preprocess_face(img, target_size=(224, 224), grayscale = False, enforce_detection = True, detector_backend = 'opencv', return_region = False, align = True, already_normalized = False):
+
+ 	#img might be path, base64 or numpy array. Convert it to numpy whatever it is.
+ 	img = load_image(img)
++
++	if not already_normalized:
++		normalize_img(img, target_size, enforce_detection, detector_backend, align)
++
++	if grayscale == True:
++		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
++
++	img = cv2.resize(img, target_size)
++
++	#---------------------------------------------------
++
++	img_pixels = image.img_to_array(img)
++	img_pixels = np.expand_dims(img_pixels, axis = 0)
++	img_pixels /= 255 #normalize input in [0, 1]
++
++	return img_pixels
++
++def normalize_img(img, target_size=(224, 224), enforce_detection = True, detector_backend = 'opencv', align = True):
+ 	base_img = img.copy()
+
+ 	img, region = detect_face(img = img, detector_backend = detector_backend, grayscale = grayscale, enforce_detection = enforce_detection, align = align)
+@@ -118,24 +138,18 @@
+ 		else: #restore base image
+ 			img = base_img.copy()
+
+-	#--------------------------
+-
+-	#post-processing
+-	if grayscale == True:
+-		img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+-
+ 	#---------------------------------------------------
+ 	#resize image to expected shape
+
+ 	# img = cv2.resize(img, target_size) #resize causes transformation on base image, adding black pixels to resize will not deform the base image
+-
++
+ 	# First resize the longer side to the target size
+ 	#factor = target_size[0] / max(img.shape)
+-
++
+ 	factor_0 = target_size[0] / img.shape[0]
+ 	factor_1 = target_size[1] / img.shape[1]
+ 	factor = min(factor_0, factor_1)
+-
++
+ 	dsize = (int(img.shape[1] * factor), int(img.shape[0] * factor))
+ 	img = cv2.resize(img, dsize)
+
+@@ -147,21 +161,8 @@
+ 		img = np.pad(img, ((diff_0 // 2, diff_0 - diff_0 // 2), (diff_1 // 2, diff_1 - diff_1 // 2), (0, 0)), 'constant')
+ 	else:
+ 		img = np.pad(img, ((diff_0 // 2, diff_0 - diff_0 // 2), (diff_1 // 2, diff_1 - diff_1 // 2)), 'constant')
+-
+-	#double check: if target image is not still the same size with target.
+-	if img.shape[0:2] != target_size:
+-		img = cv2.resize(img, target_size)
+-
+-	#---------------------------------------------------
+-
+-	img_pixels = image.img_to_array(img)
+-	img_pixels = np.expand_dims(img_pixels, axis = 0)
+-	img_pixels /= 255 #normalize input in [0, 1]
+
+-	if return_region == True:
+-		return img_pixels, region
+-	else:
+-		return img_pixels
++	return img
+
+ def find_input_shape(model):
+
