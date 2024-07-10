@@ -1,4 +1,5 @@
 import random
+import logging
 
 
 class AbstractSelector:
@@ -6,6 +7,7 @@ class AbstractSelector:
     random = False
 
     def __init__(self, config):
+        self.log = logging.getLogger("seba.selector")
         self.config = config
         if self.random:
             if "seed" not in self.config:
@@ -21,4 +23,7 @@ class AbstractSelector:
         return new_set
 
     def select(self, set):
+        pass
+
+    def set_train_set(self, set):
         pass

@@ -12,9 +12,12 @@ class TorchImageDataset(Dataset):
         self.filenames = filenames
         self.len = len(filenames)
         self.transform = transform
+        self.initialization()
 
-    def __getitem__(self, index):
-        filename = self.filenames[index]
+    def initialization(self):
+        pass
+
+    def process_img(self, filename):
         img = cv2.imread(filename)
         img.astype(float)
         img = img / 255.0
@@ -24,6 +27,9 @@ class TorchImageDataset(Dataset):
         if self.transform:
             img = self.transform(img)
         return img.float()
+
+    def __getitem__(self, index):
+        return self.process_img(self.filenames[index])
 
     def split(self, rate):
         threshold = int(self.len * rate)
@@ -52,7 +58,17 @@ class TorchImageDataset(Dataset):
             raise AttributeError("TorchImageDataset: Datapoints must be images")
 
         filenames = list(map(lambda x: x.get_path(), points))
-        return TorchImageDataset(filenames)
+        return __class__(filenames)
+
+
+class MemoryTorchImageDataset(TorchImageDataset):
+    def initialization(self):
+        self.images = []
+        for filename in self.filenames:
+            self.images.append(self.process_img(filename))
+
+    def __getitem__(self, index):
+        return self.images[index]
 
 
 class TupleDataset(Dataset):

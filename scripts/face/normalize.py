@@ -1,11 +1,12 @@
-# Normalize the images from a dataset and save them to a new dataset
-# Run from project root via python -m scripts.normalize_imgs <datasetname> [targetsize]
-# Based on the pre-recognition pipeline in DeepFace (https://github.com/serengil/deepface/blob/master/deepface/commons/functions.py#L119)
+"""
+Normalize the images from a dataset and save them to a new dataset
+Run from project root via python -m scripts.face.normalize <datasetname> [targetsize]
+Based on the pre-recognition pipeline in DeepFace (https://github.com/serengil/deepface/blob/master/deepface/commons/functions.py#L119)
 
-# NOTE: In rare cases, floating point arithmetic might lead to images being completely black, to fix this, apply scripts/retinaface.patch to your retinaface installation.
+NOTE: In rare cases, floating point arithmetic might lead to images being completely black, to fix this, apply scripts/installer/retinaface.patch to your retinaface installation.
+"""
 
 import sys
-import json
 import numpy as np
 import cv2
 import os
@@ -33,7 +34,7 @@ def normalize_image(point, model, interactive=False):
     info = RetinaFace.detect_faces(img, model=model)
 
     if not type(info) == dict:
-        if point.bbox == None or point.landmarks == None:
+        if point.bbox is None or point.landmarks is None:
             raise AttributeError("no face found and no bbox or landmark meta in " + point.get_path())
         else:
             info = {

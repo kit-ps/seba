@@ -1,5 +1,7 @@
-# Run a variety of sanity checks on a face image dataset
-# Run from project root via python -m scripts.face.check_dataset <datasetname>
+"""
+Run a variety of sanity checks on a face image dataset
+Run from project root via python -m scripts.face.check_dataset <datasetname>
+"""
 
 import sys
 import cv2
@@ -55,7 +57,8 @@ def set_checks(set):
             print("FAIL: {}".format(r))
 
 
-setname = sys.argv[1]
-set = Dataset(setname)
-set_checks(set)
-image_checks(set)
+if __name__ == "__main__":
+    setname = sys.argv[1]
+    set = Dataset(setname)
+    set_checks(set)
+    image_checks(set)

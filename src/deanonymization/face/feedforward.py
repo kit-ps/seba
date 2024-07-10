@@ -38,8 +38,7 @@ class FeedforwardDeanonymization(TorchDeanonymization):
         super().validate_config()
 
     def create_model(self):
-        self.input_dim = [math.prod(self.input_shape)]
-        self.model = FeedforwardModule(input_dim=self.input_dim[0])
+        self.model = FeedforwardModule(input_dim=math.prod(self.dim[0]))
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.config["learning_rate"], weight_decay=self.config["weight_decay"]
         )

@@ -6,7 +6,7 @@ from ...lib.utils import suppress_stdout
 from deepface import DeepFace
 
 
-class DeepfaceRecognition(Classification, AbstractFacePrivacy):
+class DeepfaceClassification(Classification, AbstractFacePrivacy):
     """Use the deepface privacy method.
     DeepFace documentation: https://github.com/serengil/deepface
 
@@ -45,9 +45,12 @@ class DeepfaceRecognition(Classification, AbstractFacePrivacy):
         else:
             self.config["already_normalized"] = bool(self.config["already_normalized"])
 
+    def train(self, set):
+        self.log.info("TRAINING SET: " + set.name)
+
     def enroll(self, set):
         self.folder = set.folder
-        self.log.info("Starting privacy evaluation.\n\tEnroll-Folder: " + self.folder + "\n\tConfiguration: " + str(self.config))
+        self.log.info("Starting privacy.\n\tEnroll-Folder: " + self.folder + "\n\tConfiguration: " + str(self.config))
 
     def classify_all(self, set, results):
         with suppress_stdout():

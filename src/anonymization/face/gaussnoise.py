@@ -24,9 +24,9 @@ class GaussnoiseAnonymization(AbstractFaceAnonymization):
 
     def anonymize(self, image):
         img = cv2.imread(image.get_path())
-        im = np.zeros(img.shape, np.int8)
+        im = np.zeros(img.shape, np.uint8)
         sigma = (self.config["sigma"], self.config["sigma"], self.config["sigma"])
         cv2.randn(im, (0, 0, 0), sigma)
-        img = np.array(np.fmin(np.fmax(np.add(img, im), np.full(img.shape, 0)), np.full(img.shape, 255)), dtype=np.uint8)
+        img = cv2.add(img, im)
 
         cv2.imwrite(image.get_path(), img)

@@ -1,5 +1,7 @@
-# Split a dataset into similarly sized parts
-# Run from project root via python -m scripts.dataset.split <dataset> <no_of_parts>
+"""
+Split a dataset into similarly sized parts
+Run from project root via python -m scripts.dataset.split <dataset> <no_of_parts>
+"""
 
 import sys
 import math
@@ -16,7 +18,8 @@ def chunks(lst, n):
     return r
 
 
-set = Dataset(sys.argv[1])
-points = chunks(list(set.datapoints.keys()), int(sys.argv[2]))
-for i in range(len(points)):
-    set.copy(only_points=points[i], newname=set.name + "-pt" + str(i))
+if __name__ == "__main__":
+    set = Dataset(sys.argv[1])
+    points = chunks(list(set.datapoints.keys()), int(sys.argv[2]))
+    for i in range(len(points)):
+        set.copy(only_points=points[i], newname=set.name + "-pt" + str(i))

@@ -1,5 +1,5 @@
 from .abstract import AbstractFaceDeanonymization
-from ...lib.torch.data import TorchImageDataset, TupleDataset
+from ...lib.torch.data import MemoryTorchImageDataset, TorchImageDataset, TupleDataset
 
 import torch
 import torch.nn as nn
@@ -34,9 +34,9 @@ class TorchDeanonymization(AbstractFaceDeanonymization):
         if "learning_rate" not in self.config:
             raise AttributeError("Torch Deanonymization requires learning rate")
         if "train_batch_size" not in self.config:
-            raise AttributeError("Torch Deanonymization requires training batch size")
+            self.config["train_batch_size"] = 64
         if "validation_batch_size" not in self.config:
-            raise AttributeError("Torch Deanonymization requires validation batch size")
+            self.config["validation_batch_size"] = 64
         if "loss" not in self.config:
             raise AttributeError("Torch Deanonymization requires loss function")
 
@@ -47,24 +47,25 @@ class TorchDeanonymization(AbstractFaceDeanonymization):
         if "reduce_lr" not in self.config:
             self.config["reduce_lr"] = True
 
+        if not "opt" in self.config or "memcache_imgs" not in self.config["opt"]:
+            self.config["opt"] = {"memcache_imgs": False}
+
     def count_parameters(self, model):
         return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
     def train(self, clear_set, anon_set):
-        if self.load_model(clear_set):
+        if self.load_model(anon_set):
             return
 
         self.load_data(clear_set, anon_set)
 
         self.create_model()
         self.log.debug("Created model with {} trainable parameters.".format(self.count_parameters(self.model)))
-        self.load_loss_function()
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        if torch.cuda.device_count() > 1:
-            self.model = nn.DataParallel(self.model)
+        self.log.debug("Using following device for training: {}".format(device))
         self.model.to(device)
-        self.model.input = self.input_dim
 
+        self.load_loss_function()
         scheduler = None
         if self.config["reduce_lr"]:
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, "min", factor=0.75, patience=5)
@@ -76,11 +77,14 @@ class TorchDeanonymization(AbstractFaceDeanonymization):
         for epoch in range(self.config["epochs"]):
             cost_training = 0
             for anon, clear in self.train_loader:
+                anon = anon.to(device)
+                clear = clear.to(device)
+
                 self.model.train()
                 self.optimizer.zero_grad()
 
-                output = self.model(anon.to(device).view([-1] + self.input_dim))
-                loss = self.criterion(output.view(self.loss_input_shape), clear.to(device).view(self.loss_input_shape))
+                output = self.model(anon)
+                loss = self.criterion(output, clear)
                 loss.backward()
                 self.optimizer.step()
                 cost_training += loss.item()
@@ -89,13 +93,13 @@ class TorchDeanonymization(AbstractFaceDeanonymization):
             cost_val = 0
             cost_val2 = 0
             for anon, clear in self.validation_loader:
+                anon = anon.to(device)
+                clear = clear.to(device)
+
                 self.model.eval()
-                output = self.model(anon.to(device).view([-1] + self.input_dim))
-                loss = self.criterion(output.view(self.loss_input_shape), clear.to(device).view(self.loss_input_shape))
+                output = self.model(anon)
+                loss = self.criterion(output, clear)
                 cost_val += loss.item()
-                if self.c2:
-                    loss2 = self.crit2(output.view(self.lis2), clear.to(device).view(self.lis2))
-                    cost_val2 += loss2.item()
 
             cost_list_validation.append(cost_val)
             self.log.info(
@@ -105,7 +109,7 @@ class TorchDeanonymization(AbstractFaceDeanonymization):
             )
 
             if len(cost_list_validation) == 1 or cost_val <= min(cost_list_validation[:-1]) - 1e-05:
-                self.save_model(clear_set)
+                self.save_model(anon_set)
                 self.log.info("found new minimum validation cost => saved model!")
                 last_update = 0
             else:
@@ -117,16 +121,16 @@ class TorchDeanonymization(AbstractFaceDeanonymization):
             if self.config["reduce_lr"]:
                 scheduler.step(cost_val)
 
-        self.save_model(clear_set, suffix="final")
-        self.load_model(clear_set)  # Reload best model (last might not be best)
+        self.save_model(anon_set, suffix="final")
+        self.load_model(anon_set)  # Reload best model (last might not be best)
 
-    def load_model(self, clear_set):
-        clear_set.reload_meta()
-        if "models" not in clear_set.meta:
-            clear_set.meta["models"] = []
+    def load_model(self, dataset):
+        dataset.reload_meta()
+        if "models" not in dataset.meta:
+            dataset.meta["models"] = []
 
-        for i in range(len(clear_set.meta["models"])):
-            x = clear_set.meta["models"][i]
+        for i in range(len(dataset.meta["models"])):
+            x = dataset.meta["models"][i]
             if x["name"] == self.name and x["suffix"] == "none" and x["config"] == self.config:
                 if os.path.exists(x["path"]):
                     self.model = torch.load(x["path"])
@@ -137,83 +141,75 @@ class TorchDeanonymization(AbstractFaceDeanonymization):
         return False
 
     def load_data(self, clear_set, anon_set):
-        clear = TorchImageDataset.from_set(clear_set)
-        anon = TorchImageDataset.from_set(anon_set)
-        self.input_shape = anon[0].shape
-        self.output_shape = clear[0].shape
+        if self.config["opt"]["memcache_imgs"]:
+            clear = MemoryTorchImageDataset.from_set(clear_set)
+            anon = MemoryTorchImageDataset.from_set(anon_set)
+        else:
+            clear = TorchImageDataset.from_set(clear_set)
+            anon = TorchImageDataset.from_set(anon_set)
+        self.dim = list(anon[0].shape)
 
         set = TupleDataset(anon, clear)
         set.shuffle()
         train_dataset, validation_dataset = set.split(self.config["train_rate"])
 
-        self.train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=self.config["train_batch_size"], shuffle=True)
-        self.validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset, batch_size=self.config["validation_batch_size"])
+        self.train_loader = torch.utils.data.DataLoader(
+            dataset=train_dataset, batch_size=self.config["train_batch_size"], shuffle=True, pin_memory=True
+        )
+        self.validation_loader = torch.utils.data.DataLoader(
+            dataset=validation_dataset, batch_size=self.config["validation_batch_size"], pin_memory=True
+        )
 
     def load_loss_function(self):
         self.c2 = False
         if self.config["loss"] == "mse":
-            self.loss_input_shape = [-1] + self.input_dim
             self.criterion = nn.MSELoss()
 
         elif self.config["loss"] == "mae":
-            self.loss_input_shape = [-1] + self.input_dim
             self.criterion = nn.L1Loss()
-
-        elif self.config["loss"] == "arcface":
-            from ...lib.torch.arcface import ArcFace_Loss
-
-            self.loss_input_shape = [-1] + list(self.output_shape)
-            self.criterion = ArcFace_Loss()
-
-            from ...lib.torch.ssim import SSIM_Loss
-
-            self.c2 = True
-            self.lis2 = [-1] + list(self.output_shape)
-            self.crit2 = SSIM_Loss(data_range=1.0, channel=self.output_shape[0])
 
         elif self.config["loss"] == "ssim":
             from ...lib.torch.ssim import SSIM_Loss
 
-            self.loss_input_shape = [-1] + list(self.output_shape)
-            self.criterion = SSIM_Loss(data_range=1.0, channel=self.output_shape[0])
+            self.criterion = SSIM_Loss(data_range=1.0, channel=self.dim[0])
 
         elif self.config["loss"] == "msssim":
             from ...lib.torch.ssim import MSSSIM_Loss
 
-            self.loss_input_shape = [-1] + list(self.output_shape)
-            self.criterion = MSSSIM_Loss(data_range=1.0, channel=self.output_shape[0])
+            self.criterion = MSSSIM_Loss(data_range=1.0, channel=self.dim[0])
 
         else:
             raise ValueError("unknown loss function " + self.config["loss"])
 
-    def save_model(self, clear_set, suffix="none"):
-        model_path = os.path.join(clear_set.folder, "model-" + str(uuid.uuid4())[:8] + ".pth")
+    def save_model(self, dataset, suffix="none"):
+        model_path = os.path.join(dataset.folder, "model-" + str(uuid.uuid4())[:8] + ".pth")
         torch.save(self.model, model_path)
 
-        clear_set.reload_meta()
-        if "models" not in clear_set.meta:
-            clear_set.meta["models"] = []
-        for i in range(len(clear_set.meta["models"])):
-            x = clear_set.meta["models"][i]
+        dataset.reload_meta()
+        if "models" not in dataset.meta:
+            dataset.meta["models"] = []
+        for i in range(len(dataset.meta["models"])):
+            x = dataset.meta["models"][i]
             if x["name"] == self.name and x["suffix"] == suffix and x["config"] == self.config:
-                os.remove(clear_set.meta["models"][i]["path"])
-                del clear_set.meta["models"][i]
+                os.remove(dataset.meta["models"][i]["path"])
+                del dataset.meta["models"][i]
                 break
 
         x = {"name": self.name, "suffix": suffix, "config": copy.deepcopy(self.config), "path": model_path}
-        clear_set.meta["models"].append(x)
-        clear_set.save_meta()
+        dataset.meta["models"].append(x)
+        dataset.save_meta()
         self.log.debug("Saved model {} under {}".format(suffix, model_path))
 
     def deanonymize_all(self):
         self.model.eval()
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.model.to(device)
         set = TorchImageDataset.from_set(self.dataset)
 
         for i in range(len(set)):
             x = set[i].to(device)
-            z = self.model(x.view([-1] + self.model.input))
-            set.update(i, z.view([3, 224, 224]))
+            z = self.model(x)
+            set.update(i, z[0])
 
     def cleanup(self):
         try:

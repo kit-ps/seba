@@ -1,27 +1,26 @@
 ---
-- repeat: 1
-  config:
-    exp: anon
-    dataset: celeba50mp-normx
-    selector:
-      name: random
-      params:
-        ids: 20
-        seed: default
-    anonymization:
-      name: gaussianblur
-      params:
-        kernel: 9
-    splitter:
-      name: anon
-      params:
-        enroll_anon: false
-        test_anon: false
-        rate: 0.75
-        seed: default
-    privacy:
-      name: deepface
-      params:
-        model: ArcFace
-        distance: cosine
-        already_normalized: true
+exp: anon
+dataset: c10k
+seed: wpes-paper
+anonymizations:
+  - name: gaussianblur
+    params:
+      kernel: [51, 83, 115, 147]
+  - name: eyemask
+    params:
+      dist: [70, 90, 110, 130]
+      center: 85
+  - name: deepprivacy
+    params:
+      model: fdf128_retinanet512
+      opt:
+        bin: bin/deepprivacy/deepprivacy
+selector:
+  name: distinctive
+  params:
+    ids: 100
+    min_imgs_per_id: 8
+rates:
+  anonbg: 0.02
+  attacker: 0.88
+  enroll: 0.75

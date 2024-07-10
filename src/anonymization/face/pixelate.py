@@ -33,5 +33,5 @@ class PixelateAnonymization(AbstractFaceAnonymization):
         orig_shape = img.shape[:2]
         img = cv2.resize(img, (self.config["size"], int((img.shape[1] / img.shape[0]) * self.config["size"])))
         if self.config["keepshape"]:
-            img = cv2.resize(img, orig_shape[:2], interpolation=cv2.INTER_NEAREST)
+            img = cv2.resize(img, orig_shape, interpolation=cv2.INTER_NEAREST)
         cv2.imwrite(image.get_path(), img)

@@ -91,7 +91,7 @@ class MOCAP(Datapoint):
                 meta = self.setmetadata
 
             range = meta["position_range"]
-            data = data[:,range[0]:range[1]]
+            data = data[:, range[0] : range[1]]
 
         return data
 
@@ -105,7 +105,7 @@ class MOCAP(Datapoint):
                 meta = self.setmetadata
 
             range = meta["rotation_range"]
-            data = data[:,range[0]:range[1]]
+            data = data[:, range[0] : range[1]]
 
         return data
 

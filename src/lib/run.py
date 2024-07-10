@@ -16,6 +16,7 @@ class Run:
         self.save_result = save_result
         if "cleanup" not in self.config:
             self.config["cleanup"] = False
+        os.makedirs("results", exist_ok=True)
 
     def run(self):
         exp = ModuleLoader.get_exp_by_name(self.config["exp"])(self.config, self.save_result)

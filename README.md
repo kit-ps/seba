@@ -8,11 +8,14 @@ It offers an interface for both the privacy and utility evaluation of anonymizat
 ## Citing
 When you use this framework in your paper, please cite us:
 ```
-@article{todt_fantomas_2024,
-	title = {Fantômas: Understanding Face Anonymization Reversibility},
-	journal = {Proceedings on Privacy Enhancing Technologies},
-	author = {Todt, Julian and Hanisch, Simon and Strufe, Thorsten},
-	year = {2024},
+@misc{todt2024seba,
+      title={SEBA: Strong Evaluation of Biometric Anonymizations}, 
+      author={Julian Todt and Simon Hanisch and Thorsten Strufe},
+      year={2024},
+      eprint={2407.06648},
+      archivePrefix={arXiv},
+      primaryClass={cs.CR},
+      url={https://arxiv.org/abs/2407.06648}, 
 }
 ```
 
@@ -72,4 +75,12 @@ We provide a sample as `sample.config.yaml`. Copy and modify as required. Check 
 python main.py your-config-file.yaml
 ```
 
+## Documentation
+A base overview over the framework design and its functionaly is provided in our white paper *link*.
+For the technical documentation over the code, see here: *link*
+
+To start the documentation server use the following command:
+```
+python -m pydoc -p <PORT>
+```
 

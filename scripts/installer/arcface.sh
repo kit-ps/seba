@@ -7,8 +7,12 @@ mkdir -p bin/
 cd bin
 
 # download arcface (use svn to not download entire repo...)
-svn export https://github.com/deepinsight/insightface/trunk/recognition/arcface_torch arcface
+git clone  -n --depth=1 --filter=tree:0 https://github.com/deepinsight/insightface arcface
 cd arcface
+git sparse-checkout set --no-cone recognition/arcface_torch
+mv recognition/arcface_torch/* .
+rm -r recognition
 
 # install requirements
+sed -i 's/sklearn/scikit-learn/' requirements.txt
 pip3 install -r requirement.txt

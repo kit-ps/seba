@@ -18,7 +18,7 @@ class AttributesUtility(Comparison, AbstractFaceUtility):
     """
 
     def get_attributes(self, point):
-        with suppress_stdout:
+        with suppress_stdout():
             return DeepFace.analyze(
                 img_path=point.get_path(),
                 detector_backend="retinaface",

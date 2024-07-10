@@ -31,12 +31,12 @@ class ModuleLoader:
         return sl_class
 
     @staticmethod
-    def get_recognition_by_name(name, trait):
-        class_name = name.capitalize() + "Recognition"
+    def get_classification_by_name(name, trait):
+        class_name = name.capitalize() + "Classification"
         r_module = importlib.import_module("src.privacy." + trait + "." + name)
         r_class = getattr(r_module, class_name)
         if not issubclass(r_class, AbstractPrivacy):
-            raise AttributeError("Recognition does not inherit AbstractRecognition.")
+            raise AttributeError("Recognition does not inherit AbstractPrivacy.")
         if not issubclass(r_class, Inference):
             raise AttributeError("Recognition does not inherit Inference.")
         return r_class

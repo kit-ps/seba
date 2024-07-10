@@ -72,10 +72,7 @@ class ConvlinaeDeanonymization(TorchDeanonymization):
             self.config["features"] = int(self.config["features"])
 
     def create_model(self):
-        self.input_dim = list(self.input_shape)
-        if len(self.input_dim) == 2:
-            self.input_dim.insert(0, 1)
-        self.model = ConvlinAutoencoderModule(channels=self.input_dim[0], features=self.config["features"], input_size=self.input_dim[1])
+        self.model = ConvlinAutoencoderModule(channels=3, features=self.config["features"], input_size=self.dim[1])
         self.optimizer = torch.optim.Adam(
             self.model.parameters(), lr=self.config["learning_rate"], weight_decay=self.config["weight_decay"]
         )

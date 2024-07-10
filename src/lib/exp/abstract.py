@@ -13,6 +13,8 @@ class AbstractExperiment:
         self.save_result = save_result
         self.sets = {}
         self.orig_config = copy.deepcopy(config)
+        self.sets["orig"] = Dataset(self.config["dataset"])
+        self.trait = self.sets["orig"].meta["trait"]
 
     def run_evaluation(self):
         if "privacy" in self.config:
@@ -23,13 +25,11 @@ class AbstractExperiment:
     def run_recognition(self):
         from ..module_loader import ModuleLoader
 
-        rec_module = ModuleLoader.get_recognition_by_name(self.config["privacy"]["name"], self.trait)
+        rec_module = ModuleLoader.get_classification_by_name(self.config["privacy"]["name"], self.trait)
         recognition = rec_module(self.config["privacy"]["params"])
         self.metrics = recognition.metrics
 
-        if "train_set" in self.config:
-            recognition.train(Dataset(self.config["train_set"]))
-
+        recognition.train(self.sets["train"])
         self.resultset = recognition.run(self.sets["enroll"], self.sets["test"], self.save_result)
         self.resultset.save_context(self.orig_config, dict(map(lambda x: (x[0], x[1].name), self.sets.items())))
         recognition.cleanup()
@@ -41,9 +41,7 @@ class AbstractExperiment:
         utility = ut_module(self.config["utility"]["params"])
         self.metrics = utility.metrics
 
-        if "train_set" in self.config:
-            utility.train(Dataset(self.config["train_set"]))
-
+        utility.train(self.sets["train"])
         self.resultset = utility.run(self.sets["enroll"], self.sets["test"], self.save_result)
         self.resultset.save_context(self.orig_config, dict(map(lambda x: (x[0], x[1].name), self.sets.items())))
 

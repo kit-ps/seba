@@ -14,4 +14,4 @@ class FullSelector(AbstractSelector):
     name = "full"
 
     def select(self, set):
-        return set.copy(softlinked=True)
+        return set
