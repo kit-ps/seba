@@ -6,13 +6,13 @@ import yaml
 
 
 class Result:
-    def __init__(self, identity, picture_id):
-        self.identity = identity
-        self.picture_id = picture_id
+    def __init__(self, label, point_id):
+        self.label = label
+        self.point_id = point_id
         self.recognized = []
 
     def add_recognized(self, recognized_id, dist=0.0):
-        self.recognized.append({"id": recognized_id, "dist": float(dist)})
+        self.recognized.append({"label": recognized_id, "dist": float(dist)})
 
     def get_best_recognized(self):
         if not len(self.recognized):
@@ -23,24 +23,24 @@ class Result:
     def is_success(self):
         if not len(self.recognized):
             return False
-        return self.get_best_recognized()["id"] == self.identity
+        return self.get_best_recognized()["label"] == self.label
 
     def is_topn_success(self, n):
         if not len(self.recognized):
             return False
         self.recognized.sort(key=lambda x: x["dist"])
-        topn = list(map(lambda x: x["id"], self.recognized))[:n]
-        return self.identity in topn
+        topn = list(map(lambda x: x["label"], self.recognized))[:n]
+        return self.label in topn
 
     def to_squashed(self, strat=None):
         if strat is None:
             return self
-        r = Result(self.identity, self.picture_id)
+        r = Result(self.label, self.point_id)
         recog = {}
         for recognized in self.recognized:
-            if not recognized["id"] in recog:
-                recog[recognized["id"]] = []
-            recog[recognized["id"]].append(recognized["dist"])
+            if not recognized["label"] in recog:
+                recog[recognized["label"]] = []
+            recog[recognized["label"]].append(recognized["dist"])
         for key in recog:
             if strat == "min":
                 dist = min(recog[key])
@@ -52,10 +52,10 @@ class Result:
         return r
 
     def __str__(self):
-        s = "Result for {} (correct: {})".format(self.picture_id, self.identity)
+        s = "Result for {} (correct: {})".format(self.point_id, self.label)
         self.recognized.sort(key=lambda x: x["dist"])
         for r in self.recognized:
-            s += "{} ({}); ".format(r["id"], r["dist"])
+            s += "{} ({}); ".format(r["label"], r["dist"])
         return s
 
 
@@ -100,13 +100,13 @@ class ResultSet:
                 result.add_recognized(*sub)
             self.results.append(result)
 
-    def save_context(self, config, datasets):
-        self.config = config
-        self.datasets = datasets
+    def save_context(self, context):
+        self.config = context['config']
+        self.datasets = context['datasets']
         if self.save:
             with open(self.filename, "a") as f:
-                f.write("config," + json.dumps(config) + "\n")
-                f.write("dataset," + ",".join(map(lambda x: x[0] + ":" + x[1], datasets.items())) + "\n")
+                f.write("config," + json.dumps(self.config) + "\n")
+                f.write("dataset," + ",".join(map(lambda x: x[0] + ":" + x[1].name, filter(lambda x: hasattr(x[1], 'name'), self.datasets.items()))) + "\n")
 
     def save(self):
         for r in self.results:
@@ -118,7 +118,7 @@ class ResultSet:
             self.append_save(result)
 
     def append_save(self, result):
-        line = result.identity + "," + result.picture_id + ","
+        line = str(result.label) + "," + str(result.point_id) + ","
         line += ",".join(map(lambda x: "|".join(map(lambda y: str(y), x.values())), result.recognized))
         line += "\n"
         with open(self.filename, "a") as f:

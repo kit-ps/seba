@@ -110,7 +110,7 @@ if len(sys.argv) > 3:
 
 if not interactive:
     newset = set.copy(newname=set.name + "-normx")
-    for point in tqdm(newset.datapoints.values()):
+    for point in tqdm(newset[:]):
         try:
             normalize_image(point, model)
         except BaseException as e:
@@ -118,5 +118,5 @@ if not interactive:
             logging.error("ERROR: failed to normalize image " + point.get_path())
             logging.exception(e)
 else:
-    point = set.datapoints[sys.argv[3]]
+    point = set.points[sys.argv[3].split('.')[:3]]
     normalize_image(point, model, True)

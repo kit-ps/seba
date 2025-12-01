@@ -12,24 +12,8 @@ import shutil
 def delete_set(info):
     if info["original"] == True:
         return False, "original"
-    if "-normx" in info["name"]:
-        return False, "normx"
-    if "webface" in info["name"]:
-        return False, "named webface"
-    if 'anonymization' in info:
-        if info['anonymization'] in ['ciagan', 'deepprivacy', 'dppix', 'dpsamp', 'fawkes', 'krtio', 'ksamepixel', 'ksameeigen']:
-            return False, "anon:" + info['anonymization']
-        else:
-            return True, "anon:" + info['anonymization']
-    if 'deanonymization' in info:
-        if info['deanonymization'] in ['denoisenlmeans', 'dicsr', 'motiondeblurring', 'mprnet', 'normsparsity', 'rldeconv', 'stripformer', 'uwiener', 'wavelet', 'wiener2']:
-            return False, "deanon:" + info['deanonymization']
-        else:
-            return True, "deanon:" + info['deanonymization']
-    if 'splitter' in info:
-        return True, "splitter"
-    if 'selector' in info:
-        return True, "selector"
+    if 'type' in info:
+        return False, 'type[{}]'.format(info['type'])
     return True, "unknown"
 
 if __name__ == "__main__":

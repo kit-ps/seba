@@ -19,17 +19,12 @@ class BlockpermutateAnonymization(AbstractFaceAnonymization):
     name = "blockpermutate"
 
     def validate_config(self):
-        if "seed" not in self.config:
-            raise AttributeError("BlockPermutateAnonymization: config: missing seed")
-
         if "blocksize" not in self.config:
             raise AttributeError("BlockPermutateAnonymization: config: missing blocksize")
         else:
             self.config["blocksize"] = int(self.config["blocksize"])
 
     def anonymize(self, image):
-        random.seed(a=self.config["seed"])
-
         img = cv2.imread(image.get_path())
         newimg = copy.deepcopy(img)
 

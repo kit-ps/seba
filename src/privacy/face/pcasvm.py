@@ -38,8 +38,8 @@ class PcasvmClassification(Classification, AbstractFacePrivacy):
         imgs, _ = self.load_data(set)
         preds = self.clf.decision_function(imgs)
 
-        for image, i in zip(set.datapoints.values(), range(len(imgs))):
-            rs = Result(image.idname, image.pointname)
+        for image, i in zip(set[:], range(len(imgs))):
+            rs = Result(image.label, image.pointname)
             for cls, prob in zip(self.clf.classes_, preds[i]):
                 rs.add_recognized(cls, dist=(1 - prob))
             self.log.debug(str(rs))
@@ -49,9 +49,9 @@ class PcasvmClassification(Classification, AbstractFacePrivacy):
     def load_data(self, set):
         img = []
         pred = []
-        for point in set.datapoints.values():
+        for point in set[:]:
             img.append(self.load_img(point))
-            pred.append(point.idname)
+            pred.append(point.label)
         return np.array(img), np.array(pred)
 
     def load_img(self, img):

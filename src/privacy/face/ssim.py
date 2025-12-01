@@ -24,12 +24,12 @@ class SsimClassification(Classification, AbstractFacePrivacy):
         self.log.info("Starting privacy.\n\tEnroll-Set: " + self.set.name)
         self.ssim = SsimUtility({})
 
-    def classify_point(self, image):
-        rs = Result(image.idname, image.pointname)
-        img1 = cv2.imread(image.get_path())
-        for galimg in self.set.datapoints.values():
+    def classify_point(self, point):
+        rs = Result(point.label, point.pointname)
+        img1 = cv2.imread(point.get_path())
+        for galimg in self.set[:]:
             img2 = cv2.imread(galimg.get_path())
             dist = self.ssim.ssim(img1, img2)
-            rs.add_recognized(galimg.idname + "." + galimg.pointname, dist=(1 - dist))
+            rs.add_recognized(galimg.label, dist=(1 - dist))
         self.log.debug(str(rs))
         return rs

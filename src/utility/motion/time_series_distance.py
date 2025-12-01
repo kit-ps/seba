@@ -55,8 +55,8 @@ class Time_series_distanceUtility(Comparison, AbstractMotionUtility):
 
         average_distance /= len(old_mocap)
 
-        rs = Result(old_point.idname, old_point.pointname)
-        rs.add_recognized(old_point.idname, dist=average_distance)
-        self.log.debug(old_point.idname + "\t\t" + old_point.pointname + "\t\t" + str(average_distance))
+        rs = Result(old_point.label, old_point.pointname)
+        rs.add_recognized(old_point.label, dist=average_distance)
+        self.log.debug(old_point.label + "\t\t" + old_point.pointname + "\t\t" + str(average_distance))
 
         return rs

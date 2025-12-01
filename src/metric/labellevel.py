@@ -1,8 +1,8 @@
 from .abstract import AbstractMetric
 
 
-class IdlevelMetric(AbstractMetric):
-    """Identity level accuracy metrics
+class LabellevelMetric(AbstractMetric):
+    """Label level accuracy metrics
 
     Required pips:
         none
@@ -12,17 +12,17 @@ class IdlevelMetric(AbstractMetric):
     """
 
     def calc(self):
-        identities = {}
+        labels = {}
 
         for result in self.result.to_squashed(strat="min").results:
-            if result.identity not in identities:
-                identities[result.identity] = []
-            identities[result.identity].append(result)
+            if result.identity not in labels:
+                labels[result.label] = []
+            labels[result.label].append(result)
 
-        self.keys = ["identity", "n", "hitrate", "top3rate", "top5rate", "top10rate"]
+        self.keys = ["label", "n", "hitrate", "top3rate", "top5rate", "top10rate"]
         self.data = []
 
-        for id, results in identities.items():
+        for id, results in labels.items():
             overall = len(results)
             success_n = 0
             top3_n = 0

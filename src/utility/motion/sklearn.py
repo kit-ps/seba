@@ -113,15 +113,15 @@ class SklearnUtility(Classification, AbstractMotionUtility):
         self.log.info("Starting privacy.\n\tConfiguration: " + str(self.config))
 
         if self.config["attribute"] == "identity":
-            self.train_labels = [e.idname for e in set.datapoints.values()]
+            self.train_labels = [e.idname for e in set[:]]
         else:
             self.train_labels = []
-            for e in set.datapoints.values():
+            for e in set[:]:
                 label = getattr(e.identity, self.config["attribute"])
                 label = self.config["attribute_conversion"][label]
                 self.train_labels.append(label)
 
-        self.train_set = np.array([e.load() for e in list(set.datapoints.values())])
+        self.train_set = np.array([e.load() for e in set[:]])
         self.set_metadata = set.meta["original_meta"]
 
         feature_vecs = []
@@ -160,7 +160,7 @@ class SklearnUtility(Classification, AbstractMotionUtility):
         data = mocap.load()
 
         if self.config["attribute"] == "identity":
-            label = mocap.idname
+            label = mocap.identity
         else:
             label = getattr(mocap.identity, self.config["attribute"])
 

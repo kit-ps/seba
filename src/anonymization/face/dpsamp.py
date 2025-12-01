@@ -8,8 +8,8 @@ import scipy.interpolate
 from multiprocessing import Pool
 
 
-def anonymize_image(imgpath, config):
-    random.seed(a=config["seed"])
+def anonymize_image(imgpath, config, seed):
+    random.seed(a=seed)
     img = cv2.imread(imgpath)
     # generate k clusters using k-means
     pxls = np.float32(img.reshape((-1, 3)))
@@ -99,14 +99,12 @@ class DpsampAnonymization(AbstractFaceAnonymization):
             raise AttributeError("DP-Samp anonymization: missing parameter m (number of pixels)")
         if "threshold" not in self.config:
             raise AttributeError("DP-Samp anonymization: missing parameter threshold")
-        if "seed" not in self.config:
-            self.config["seed"] = None
 
         if "opt" not in self.config or "threads" not in self.config["opt"]:
             self.config["opt"] = {"threads": 24}
 
     def anonymize_all(self):
         p = Pool(processes=self.config["opt"]["threads"])
-        args = list(map(lambda x: (x.get_path(), self.config), self.dataset.datapoints.values()))
+        args = list(map(lambda x: (x.get_path(), self.config, self.seed), self.dataset[:]))
         p.starmap(anonymize_image, args)
         p.close()

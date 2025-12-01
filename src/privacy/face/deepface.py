@@ -46,7 +46,7 @@ class DeepfaceClassification(Classification, AbstractFacePrivacy):
             self.config["already_normalized"] = bool(self.config["already_normalized"])
 
     def train(self, set):
-        self.log.info("TRAINING SET: " + set.name)
+        pass
 
     def enroll(self, set):
         self.folder = set.folder
@@ -55,7 +55,7 @@ class DeepfaceClassification(Classification, AbstractFacePrivacy):
     def classify_all(self, set, results):
         with suppress_stdout():
             result_p = DeepFace.find(
-                list(map(lambda x: x.get_path(), set.datapoints.values())),
+                list(map(lambda x: x.get_path(), set.points[:])),
                 self.folder,
                 model_name=self.config["model"],
                 enforce_detection=False,
@@ -66,14 +66,14 @@ class DeepfaceClassification(Classification, AbstractFacePrivacy):
             )
 
         i = 0
-        for name, point in set.datapoints.items():
-            results.append(self.classify_point(name, point, result_p[i].to_dict()))
+        for point in set.points[:]:
+            results.append(self.classify_point(point, result_p[i].to_dict()))
             i += 1
         return results
 
-    def classify_point(self, name, point, result):
+    def classify_point(self, point, result):
         dist_key = self.config["model"] + "_" + self.config["distance"]
-        rs = Result(point.idname, point.pointname)
+        rs = Result(point.label, point.pointname)
 
         for i in range(len(result["identity"])):
             dist = round(result[dist_key][i], 3)

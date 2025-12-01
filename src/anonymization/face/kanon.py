@@ -33,7 +33,7 @@ class KanonAnonymization(AbstractFaceAnonymization):
             raise AttributeError("K-Anonymity anonymization requires background data set. Add a anonbg_rate parameter to your config!")
 
         images = []
-        for point in self.bg.datapoints.values():
+        for point in self.bg[:]:
             img = cv2.imread(point.get_path())
             images.append(img.flatten())
         images = np.array(images)
@@ -47,7 +47,7 @@ class KanonAnonymization(AbstractFaceAnonymization):
         self.features = self.pca.fit_transform(normed_imgs)
         self.log.debug("Finished Setup")
 
-        for point in self.dataset.datapoints.values():
+        for point in self.dataset[:]:
             img = cv2.imread(point.get_path())
             f = self.pca.transform(self.scaler.transform(img.flatten().reshape(1, -1)))
 
@@ -63,7 +63,7 @@ class KanonAnonymization(AbstractFaceAnonymization):
             while len(picked_imgs) < (self.config["k"] - 1):
                 if len(x) <= i:
                     break
-                p = list(self.bg.datapoints.values())[x[i]]
+                p = list(self.bg[:])[x[i]]
                 if p.idname not in picked_ids:
                     picked_ids.append(p.idname)
                     picked_imgs.append(p)

@@ -2,25 +2,24 @@ import yaml
 import collections.abc
 import os
 import os.path
-from .set import Dataset
 
 
 class DatasetManager:
     @staticmethod
-    def get_all():
-        base = os.path.join(os.getcwd(), "data")
+    def get_all(dir = os.path.join(os.getcwd(), "data")):
         sets = {}
-        for set in [f for f in os.listdir(base) if f[-10:] == ".meta.yaml"]:
-            with open(os.path.join(base, set), "r") as file:
+        for set in [f for f in os.listdir(dir) if f[-10:] == ".meta.yaml"]:
+            with open(os.path.join(dir, set), "r") as file:
                 sets[set[:-10]] = yaml.load(file, Loader=yaml.SafeLoader)
         return sets
 
     @staticmethod
-    def get_matching(config):
-        sets = DatasetManager.get_all()
+    def get_matching(config, dir, cls, seed, context):
+        sets = DatasetManager.get_all(dir)
         for name, meta in sets.items():
             if DatasetManager.match_level(meta, config):
-                set = Dataset(name)
+                set = cls({'dir': dir, 'name': name}, seed, context)
+                set.run([])
                 return set
         return None
 

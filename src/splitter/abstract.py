@@ -8,14 +8,13 @@ class AbstractSplitter:
     nin = 0
     nout = 0
 
-    def __init__(self, config):
+    def __init__(self, config, seed, context):
         self.config = config
+        self.seed = seed
         self.log = logging.getLogger("seba.splitter")
         self.validate_config()
         if self.random:
-            if "seed" not in self.config:
-                raise AttributeError("Random Splitters require seed to be set in configuration!")
-            random.seed(a=self.config["seed"])
+            random.seed(a=seed)
 
     def validate_config(self):
         pass
@@ -42,7 +41,10 @@ class AbstractSplitter:
                 # this allows skipping meta writing here if meta was written within splitter
                 out_sets[i].meta["original"] = parents
                 out_sets[i].meta["params"] = self.config
-                out_sets[i].meta["splitter"] = self.name
+                out_sets[i].meta["type"] = "splitter"
+                out_sets[i].meta["name"] = self.name
+                out_sets[i].meta["seed"] = self.seed
+                out_sets[i].meta["label"] = out_sets[i].name
                 out_sets[i].meta["part"] = i
                 out_sets[i].save_meta()
 

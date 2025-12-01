@@ -7,8 +7,8 @@ import logging
 import os.path
 import sys
 import argparse
+import importlib
 from src.lib.result import ResultSet
-from src.lib.module_loader import ModuleLoader
 
 
 def create_parser():
@@ -41,8 +41,8 @@ if __name__ == "__main__":
 
     try:
         resultset = ResultSet(args.results, save=False)
-        metric = ModuleLoader.get_metric_by_name(args.metric)(resultset)
-        metric.run()
+        metric = getattr(importlib.import_module("src.metric.{}".format(args.metric)), '{}Metric'.format(args.metric.capitalize()))({}, '', {})
+        metric.run([resultset])
     except Exception as e:
         logger.critical("Failed to redo metric")
         logger.exception(e)

@@ -3,7 +3,7 @@ from .abstract import AbstractSplitter
 import random
 
 
-class Intraid2to2Splitter(AbstractSplitter):
+class Withinid2to2Splitter(AbstractSplitter):
     """Splitter for anonymization evaluation experiments
         Creates two output datasets: enrollment and test
 
@@ -18,7 +18,7 @@ class Intraid2to2Splitter(AbstractSplitter):
         - (bool) enroll_clear: whether enrollment images are from clear set (true) or anonymized set (false) (optional)
     """
 
-    name = "intraid2to2"
+    name = "withinid2to2"
     random = True
     nin = 2
     nout = 2
@@ -39,27 +39,28 @@ class Intraid2to2Splitter(AbstractSplitter):
     def split(self, in_sets):
         orig_set, anon_set = in_sets
 
-        enroll_img_ids = []
-        test_img_ids = []
+        enroll_points = []
+        test_points = []
 
         min_set = anon_set if len(anon_set.identities) <= len(orig_set.identities) else orig_set
 
         if self.config["rate"] == 1.0:
             return [
-                orig_set.copy(only_ids=min_set.identities.keys(), softlinked=True),
-                anon_set.copy(only_ids=min_set.identities.keys(), softlinked=True),
+                orig_set.copy(id_filter=(lambda x: x.identity in min_set.identities), softlinked=True),
+                anon_set.copy(id_filter=(lambda x: x.idenitty in min_set.identities), softlinked=True),
             ]
 
-        for identity in min_set.point_by_id():
-            random.shuffle(identity)
-            split = int(self.config["rate"] * len(identity))
-            enroll_img_ids += identity[:split]
-            test_img_ids += identity[split:]
+        for identity in min_set.identities:
+            imgs = min_set[identity]
+            random.shuffle(imgs)
+            split = int(self.config["rate"] * len(imgs))
+            enroll_points += imgs[:split]
+            test_points += imgs[split:]
 
         if self.config["enroll_clear"]:
-            enroll_set = orig_set.copy(only_points=enroll_img_ids, softlinked=True)
+            enroll_set = orig_set.copy(point_filter=(lambda x: x in enroll_points), softlinked=True)
         else:
-            enroll_set = anon_set.copy(only_points=enroll_img_ids, softlinked=True)
-        test_set = anon_set.copy(only_points=test_img_ids, softlinked=True)
+            enroll_set = anon_set.copy(point_filter=(lambda x: x in enroll_points), softlinked=True)
+        test_set = anon_set.copy(point_filter=(lambda x: x in test_points), softlinked=True)
 
         return [enroll_set, test_set]

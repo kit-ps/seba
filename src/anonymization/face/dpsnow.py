@@ -21,14 +21,9 @@ class DpsnowAnonymization(AbstractFaceAnonymization):
 
     name = "dpsnow"
 
-    def init(self):
-        random.seed(a=self.config["seed"])
-
     def validate_config(self):
         if "d" not in self.config:
             raise AttributeError("DP-Snow anonymization: missing parameter d (privacy budget)")
-        if "seed" not in self.config:
-            self.config["seed"] = None
 
     def anonymize(self, image):
         img = cv2.imread(image.get_path())

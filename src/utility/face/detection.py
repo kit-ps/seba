@@ -38,6 +38,6 @@ class DetectionUtility(Comparison, AbstractFaceUtility):
         else:
             score = 0.0
 
-        rs = Result(old_point.idname, old_point.pointname)
-        rs.add_recognized(old_point.idname, dist=score)
+        rs = Result(old_point.label, old_point.pointname)
+        rs.add_recognized(old_point.label, dist=score)
         return rs

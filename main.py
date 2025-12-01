@@ -28,14 +28,6 @@ def create_parser():
     parser = argparse.ArgumentParser(prog="main.py")
     parser.add_argument("-v", "--verbose", action="count", default=0, help="Increase verbosity (0x = INFO, 1x = DEBUG, 2x = ALL)")
     parser.add_argument("-i", "--interactive", dest="interactive", default=False, action="store_true", help="Enter interactive mode")
-    parser.add_argument(
-        "-s",
-        "--save-result",
-        dest="save_result",
-        default=False,
-        action="store_true",
-        help="Store the full result file and not just the calculated metrics.",
-    )
     parser.add_argument("config", default=None, help="The config file to use.")
     return parser
 
@@ -45,6 +37,7 @@ __doc__ += parser.format_help()
 
 if __name__ == "__main__":
     os.makedirs("logs", exist_ok=True)
+    os.makedirs("results", exist_ok=True)
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
@@ -78,7 +71,7 @@ if __name__ == "__main__":
     for cfg in _CONFIG:
         for round in range(cfg["repeat"]):
             try:
-                run = Run(copy.deepcopy(cfg["config"]), round=round, save_result=args.save_result)
+                run = Run(copy.deepcopy(cfg), round=round)
                 run.run()
             except Exception as e:
                 _LOGGER.warning("Run failed.")

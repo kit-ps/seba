@@ -116,7 +116,7 @@ class Datapoint_classificationUtility(Classification, AbstractMotionUtility):
         self.log.info("Starting privacy.\n\tConfiguration: " + str(self.config))
 
         self.train_labels = []
-        for e in set.datapoints.values():
+        for e in set[:]:
             label = getattr(e, self.config["attribute"])
             self.train_labels.append(label)
 

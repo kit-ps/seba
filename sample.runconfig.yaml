@@ -1,77 +1,23 @@
 ---
 - repeat: 1
-  config:
-    exp: anon
-    dataset: celeba
-    cleanup: true
-    seed: seed
-    selector:
-      name: random
+  steps:
+    - type: dataset
+      name: face
       params:
-        ids: 20
-    anonymization:
-      name: gaussianblur
+        dir: ./data
+        name: celeba50mp-normx
+      out: orig
+    - type: splitter
+      name: withinlabel1to2
       params:
-        kernel: 9
-    privacy:
-      name: deepface
-      params:
-        model: ArcFace
-        distance: cosine
-        already_normalized: true
-    rates:
-      anonbg: 0.02
-      attacker: 0.88
-      enroll: 0.75
-- repeat: 1
-  config:
-    exp: deanon
-    dataset: celeba
-    cleanup: true
-    seed: seed
-    selector:
-      name: random
-      params:
-        ids: 20
-    anonymization:
-      name: gaussianblur
-      params:
-        kernel: 9
-    deanonymization:
-      name: convlinae
-      params:
-        epochs: 100
-        learning_rate: 0.0001
-        loss: ssim
-        train_rate: 0.85
-    privacy:
-      name: deepface
-      params:
-        model: ArcFace
-        distance: cosine
-        already_normalized: true
-    rates:
-      anonbg: 0.02
-      attacker: 0.88
-      enroll: 0.75
-- repeat: 1
-  config:
-    exp: anon
-    dataset: celeba
-    cleanup: true
-    seed: seed
-    selector:
-      name: random
-      params:
-        ids: 20
-    anonymization:
-      name: gaussianblur
-      params:
-        kernel: 9
-    utility:
-      name: attributes
+        rate: 0.8
+      in: orig
+      out: ["enroll", "test"]
+    - type: privacy
+      name: frknn
       params: {}
-    rates:
-      anonbg: 0.02
-      attacker: 0.88
-      enroll: 1.0
+      in: ["enroll", "test"]
+      out: results
+    - type: metrics
+      name: accuracy
+      in: results

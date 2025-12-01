@@ -54,11 +54,11 @@ class ArcfaceClassification(Classification, AbstractFacePrivacy):
 
         for point in set.datapoints.values():
             img = self.load_img(point.get_path())
-            self.reprs[point.idname + "." + point.pointname] = self.net(img).numpy()[0]
+            self.reprs[point.label + "." + point.pointname] = self.net(img).numpy()[0]
 
     @torch.no_grad()
     def classify_point(self, image):
-        rs = Result(image.idname, image.pointname)
+        rs = Result(image.label, image.pointname)
         img = self.load_img(image.get_path())
         repr = self.net(img).numpy()[0]
 
@@ -78,11 +78,9 @@ class ArcfaceClassification(Classification, AbstractFacePrivacy):
         root_folder = os.path.join(set.folder, "root")
         os.mkdir(root_folder)
 
-        for key in set.identities.keys():
-            os.mkdir(os.path.join(root_folder, key))
-
-        for point in set.datapoints.values():
-            path = os.path.join(root_folder, point.idname, point.pointname + "." + point.ext)
+        for point in set[:]:
+            os.makedirs(os.path.join(root_folder, point.label), exist_ok=True)
+            path = os.path.join(root_folder, point.label, point.pointname + "." + point.ext)
             os.symlink(point.get_path(), path)
 
         cmd = ["python3", "-m", "mxnet.tools.im2rec", "--list", "--recursive", "train", str(root_folder)]
@@ -132,7 +130,7 @@ config.num_epoch = 40
 config.warmup_epoch = 0
 config.val_targets = ['lfw', 'cfp_fp', "agedb_30"]
 """.format(
-            self.id, len(set.identities), len(set.datapoints)
+            self.id, len(set.identities), len(set[:])
         )
 
         with open("bin/arcface/configs/conf-" + self.id + ".py", "w") as f:

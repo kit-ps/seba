@@ -18,12 +18,12 @@ class DistanceMetric(AbstractMetric):
     """
 
     def calc(self):
-        identities = []
+        labels = []
         dists = []
 
         for result in self.result.results:
-            if result.identity not in identities:
-                identities.append(result.identity)
+            if result.label not in labels:
+                labels.append(result.label)
             if numpy.isfinite(result.recognized[0]["dist"]):
                 dists.append(result.recognized[0]["dist"])
 
@@ -33,7 +33,7 @@ class DistanceMetric(AbstractMetric):
             conf = st.t.interval(0.95, len(dists) - 1, loc=numpy.mean(dists), scale=st.sem(dists))
 
         return {
-            "ids": len(identities),
+            "ids": len(labels),
             "n": len(dists),
             "avg": round(float(numpy.mean(dists)), 3),
             "std": round(float(numpy.std(dists)), 3),

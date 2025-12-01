@@ -31,8 +31,8 @@ class LandmarksUtility(Comparison, AbstractFaceUtility):
         else:
             dist = np.nan
 
-        rs = Result(old_point.idname, old_point.pointname)
-        rs.add_recognized(old_point.idname, dist=dist)
-        self.log.debug(old_point.idname + "\t\t" + old_point.pointname + "\t\t" + str(dist))
+        rs = Result(old_point.label, old_point.pointname)
+        rs.add_recognized(old_point.label, dist=dist)
+        self.log.debug(old_point.label + "\t\t" + old_point.pointname + "\t\t" + str(dist))
 
         return rs

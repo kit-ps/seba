@@ -34,12 +34,12 @@ class FrknnClassification(Classification, AbstractFacePrivacy):
         self.log.debug("Extracting face encodings.")
         encodings = []
         ids = []
-        for point in set.datapoints.values():
+        for point in set[:]:
             face = face_recognition.load_image_file(point.get_path())
             face_encodings = face_recognition.face_encodings(face)
             if len(face_encodings) == 1:
                 encodings.append(face_encodings[0])
-                ids.append(point.idname)
+                ids.append(point.label)
 
         self.log.debug("Training model.")
         n_neighbors = int(round(math.sqrt(len(encodings))))
@@ -51,7 +51,7 @@ class FrknnClassification(Classification, AbstractFacePrivacy):
             self.no_encodings = True
 
     def classify_point(self, image):
-        rs = Result(image.idname, image.pointname)
+        rs = Result(image.label, image.pointname)
 
         img = cv2.imread(image.get_path())
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

@@ -24,14 +24,14 @@ class AccuracyMetric(AbstractMetric):
         top3_n = 0
         top5_n = 0
         top10_n = 0
-        identities = {}
+        labels = {}
 
-        self.result.results.sort(key=lambda x: x.identity)
+        self.result.results.sort(key=lambda x: x.label)
 
         for result in self.result.to_squashed(strat="min").results:
-            if result.identity not in identities:
-                identities[result.identity] = []
-            identities[result.identity].append(result)
+            if result.label not in labels:
+                labels[result.label] = []
+            labels[result.label].append(result)
 
         for result in self.result.to_squashed(strat="min").results:
             if len(result.recognized) > 0:
@@ -50,12 +50,12 @@ class AccuracyMetric(AbstractMetric):
                 elif result.is_topn_success(10):
                     top10_n += 1
             else:
-                success_n += 1 / len(identities.keys())
-                top3_n += min(3 / len(identities.keys()), 1)
-                top5_n += min(5 / len(identities.keys()), 1)
-                top10_n += min(10 / len(identities.keys()), 1)
+                success_n += 1 / len(labels.keys())
+                top3_n += min(3 / len(labels.keys()), 1)
+                top5_n += min(5 / len(labels.keys()), 1)
+                top10_n += min(10 / len(labels.keys()), 1)
 
-        export["ids"] = len(identities.keys())
+        export["labels"] = len(labels.keys())
         export["n"] = len(self.result.results)
         export["hitrate"] = round((success_n / overall), 3)
         export["top1rate"] = round((success_n / overall), 3)
@@ -65,7 +65,7 @@ class AccuracyMetric(AbstractMetric):
 
         # chance level rates
         for k in [1, 3, 5, 10]:
-            export["cl-top" + str(k) + "rate"] = round(min((k / export["ids"]), 1), 3)
+            export["cl-top" + str(k) + "rate"] = round(min((k / export["labels"]), 1), 3)
             if 100 - export["cl-top" + str(k) + "rate"] > 0:
                 norm_factor = 100 / (100 - export["cl-top" + str(k) + "rate"])
             else:
@@ -75,7 +75,7 @@ class AccuracyMetric(AbstractMetric):
 
         # id-level rates
         accs = []
-        for id, results in identities.items():
+        for id, results in labels.items():
             hits = 0
             for result in results:
                 if result.is_success():
@@ -85,7 +85,7 @@ class AccuracyMetric(AbstractMetric):
             conf = (np.mean(accs),)
         else:
             conf = st.t.interval(0.95, len(accs) - 1, loc=np.mean(accs), scale=st.sem(accs))
-        export["id-mean"] = round(float(np.mean(accs)), 3)
-        export["id-conf"] = round(float(np.mean(accs) - conf[0]), 3)
+        export["label-mean"] = round(float(np.mean(accs)), 3)
+        export["label-conf"] = round(float(np.mean(accs) - conf[0]), 3)
 
         return export

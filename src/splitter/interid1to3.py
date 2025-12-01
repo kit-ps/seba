@@ -34,7 +34,7 @@ class Interid1to3Splitter(AbstractSplitter):
 
     def split(self, in_sets):
         in_set = in_sets[0]
-        ids = list(in_set.identities.keys())
+        ids = list(in_set.identities)
         random.shuffle(ids)
 
         split0 = int(len(ids) * self.config["rates"][0])
@@ -45,12 +45,12 @@ class Interid1to3Splitter(AbstractSplitter):
         eval_ids = ids[split1:]
 
         self.log.info("Creating anonymization background set...")
-        anonbg_set = in_set.copy(only_ids=anonbg_ids, softlinked=True)
+        anonbg_set = in_set.copy(id_filter=(lambda x: x.identity in anonbg_ids), softlinked=True)
 
         self.log.info("Creating attacker set...")
-        attacker_set = in_set.copy(only_ids=attacker_ids, softlinked=True)
+        attacker_set = in_set.copy(id_filter=(lambda x: x.identity in attacker_ids), softlinked=True)
 
         self.log.info("Creating evaluation set...")
-        eval_set = in_set.copy(only_ids=eval_ids, softlinked=True)
+        eval_set = in_set.copy(id_filter=(lambda x: x.identity in eval_ids), softlinked=True)
 
         return [anonbg_set, attacker_set, eval_set]
